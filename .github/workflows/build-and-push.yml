@@ -10,7 +10,7 @@ on:
 
 env:
   REGISTRY: docker.io
-  IMAGE_NAME: zlink-cloudtech/dns-server
+  IMAGE_NAME: dns-server
 
 jobs:
   build-and-push:
@@ -36,7 +36,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          images: ${{ env.REGISTRY }}/${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}
           tags: |
             type=ref,event=branch
             type=ref,event=pr
@@ -44,22 +44,19 @@ jobs:
             type=raw,value=latest,enable={{is_default_branch}}
 
       - name: Build and push Docker image
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          platforms: linux/amd64,linux/arm64
-          push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-          build-args: |
-            COUNTRY=${{ vars.COUNTRY || '' }}
-            BASE_IMAGE=alpinelinux/unbound:latest
-            BASE_IMAGE_ARM=alpinelinux/unbound:latest-aarch64
+        run: |
+          export IMAGE_NAME=${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}
+          export COUNTRY=${{ vars.COUNTRY || '' }}
+          make build-amd64 PUSH_IMAGE=YES
+          make build-arm64 PUSH_IMAGE=YES
+          docker buildx imagetools create ${{ env.REGISTRY }}/${IMAGE_NAME}:latest \
+            --amend ${{ env.REGISTRY }}/${IMAGE_NAME}-amd64:latest \
+            --amend ${{ env.REGISTRY }}/${IMAGE_NAME}-arm64:latest
 
       - name: Update Docker Hub description
         uses: peter-evans/dockerhub-description@v4
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
-          repository: ${{ env.IMAGE_NAME }}
+          repository: ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}
           readme-filepath: ./README.md
