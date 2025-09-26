@@ -49,9 +49,6 @@ jobs:
           export COUNTRY=${{ vars.COUNTRY || '' }}
           make build-amd64 PUSH_IMAGE=YES
           make build-arm64 PUSH_IMAGE=YES
-          docker buildx imagetools create ${{ env.REGISTRY }}/${IMAGE_NAME}:latest \
-            --amend ${{ env.REGISTRY }}/${IMAGE_NAME}-amd64:latest \
-            --amend ${{ env.REGISTRY }}/${IMAGE_NAME}-arm64:latest
 
       - name: Update Docker Hub description
         uses: peter-evans/dockerhub-description@v4
