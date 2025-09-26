@@ -1,0 +1,13 @@
+services:
+  dns-server:
+    image: ${DNS_SERVER_IMAGE:-zlinkcloudtech/dns-server-amd64:latest}
+    container_name: dns-server
+    restart: unless-stopped
+    network_mode: host
+    privileged: true
+    user: "root:root"
+    environment:
+      UNBOUND_HOSTS_GITHUB_ENABLE: YES
+    volumes:
+      - ./unbound.conf:/etc/unbound/unbound.conf
+      - ./unbound.conf.d/:/etc/unbound/unbound.conf.d/
